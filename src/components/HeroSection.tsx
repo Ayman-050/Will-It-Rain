@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Cloud, Droplets, Thermometer, Wind, MapPin, Calendar } from 'lucide-react';
-import './'
+import './HeroSection.css'
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);

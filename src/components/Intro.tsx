@@ -6,7 +6,6 @@ interface IntroProps {
 
 const Intro = ({ onComplete }: IntroProps) => {
   const [isVisible, setIsVisible] = useState(true);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [phase, setPhase] = useState<'flash' | 'animate' | 'initializing' | 'system-online' | 'exit' | 'complete'>('flash');
   const [showInitializing, setShowInitializing] = useState(false);
   const [showSystemOnline, setShowSystemOnline] = useState(false);
@@ -14,10 +13,7 @@ const Intro = ({ onComplete }: IntroProps) => {
   useEffect(() => {
     // Check for reduced motion preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const reducedMotion = mediaQuery.matches;
-    setPrefersReducedMotion(reducedMotion);
-    
-    if (reducedMotion) {
+    if (mediaQuery.matches) {
       // Skip animations entirely for accessibility
       setTimeout(() => {
         setIsVisible(false);

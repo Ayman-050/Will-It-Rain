@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Free OpenStreetMap tiles via Leaflet — no API key or billing account needed.
+// Free OpenStreetMap tiles via Leaflet. No API key or billing account needed.
 
 const defaultCenter: [number, number] = [37.7749, -122.4194]; // San Francisco
 

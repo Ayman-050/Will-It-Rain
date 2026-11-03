@@ -115,7 +115,6 @@ function App() {
     setShowIntro(false);
   };
 
-
   return (
     <>
       {showIntro && <Intro onComplete={handleIntroComplete} />}
@@ -141,7 +140,6 @@ function App() {
             and heat risk forecasts to plan your perfect day.
           </p>
         </header>
-        
 
         <div className="flex flex-col items-center gap-6 mb-8">
           <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl mb-20">
@@ -152,7 +150,7 @@ function App() {
               setManualLat={setManualLat}
               setManualLon={setManualLon}
             />
-            <DatePicker onDateSelect={handleDateSelect} disabled={!location} />
+            <DatePicker onDateSelect={handleDateSelect} />
           </div>
 
           <Map
@@ -171,8 +169,6 @@ function App() {
             </button>
           )}
         </div>
-        
-       
 
         {error && (
           <div className="max-w-2xl mx-auto mb-8">
@@ -195,11 +191,6 @@ function App() {
             </>
           ) : null}
         </div>
-
-        
-        
-
-
       </div>
 
       <footer className="text-center py-8 text-gray-600 text-sm">
@@ -213,39 +204,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-// import './App.css'
-// import {Routes ,Route} from 'react-router'
-// import Login from './pages/Login'
-// import Homepage from './pages/Homepage'
-// import Signup from './pages/Signup'
-// import Navbar from './components/Navbar'
-// import ValidateIsLoggedIn from './validators/ValidateIsLoggedIn'
-// import ValidateIsLoggedOut from './validators/'
-
-// function App() {
-
-
-//   return (
-//     <>
-//       <Navbar/>
-//       <Routes>
-//         <Route path="/" element={<ValidateIsLoggedIn><Homepage/></ValidateIsLoggedIn>}/>
-//         <Route path="/signup" element={<ValidateIsLoggedOut><Signup/></ValidateIsLoggedOut>}/>
-//         <Route path="/login" element={<ValidateIsLoggedOut><Login/></ValidateIsLoggedOut>}/>
-//       </Routes>
-//     </>
-//   )
-// }
-
-// export default App
-
-

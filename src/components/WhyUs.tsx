@@ -1,6 +1,3 @@
-import React from 'react'
-import './Whyus.css'
-
 function WhyUs() {
   return (
     <div className="mx-auto flex justify-center items-center my-28">
@@ -13,7 +10,7 @@ function WhyUs() {
             What makes us different?
           </h2>
           <p className="text-lg text-gray-200 text-center max-w-2xl mx-auto animate-fade-in-up delay-200">
-            We combine real-time NASA data, AI-powered risk analysis, and a beautiful interactive experience to help you plan with confidence. Our unique blend of science and design means you get forecasts you can trust—delivered with clarity and style.
+            We combine real-time NASA data, AI-powered risk analysis, and a beautiful interactive experience to help you plan with confidence. Our unique blend of science and design means you get forecasts you can trust, delivered with clarity and style.
           </p>
           {/* Animated underline */}
           <div className="mx-auto mt-4 w-24 h-1 bg-gradient-to-r from-blue-400 via-green-400 to-blue-400 rounded-full animate-pulse"></div>

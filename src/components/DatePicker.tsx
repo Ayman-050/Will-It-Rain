@@ -3,13 +3,10 @@ import { Calendar } from 'lucide-react';
 
 interface DatePickerProps {
   onDateSelect: (date: string) => void;
-  disabled?: boolean;
 }
 
-export default function DatePicker({ onDateSelect, disabled }: DatePickerProps) {
+export default function DatePicker({ onDateSelect }: DatePickerProps) {
   const [selectedDate, setSelectedDate] = useState('');
-
-  const today = new Date().toISOString().split('T')[0];
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;

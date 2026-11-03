@@ -1,5 +1,5 @@
 // Real weather-model forecast from Open-Meteo (free, no API key).
-// Only covers the next 16 days — beyond that, no forecast has useful skill.
+// Only covers the next 16 days. Beyond that, no forecast has useful skill.
 // Docs: https://open-meteo.com/en/docs
 
 export const FORECAST_DAYS = 16;
