@@ -9,7 +9,10 @@ interface ResultsCardProps {
 
 export default function ResultsCard({ result, cityName }: ResultsCardProps) {
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Build the date from its parts: new Date('YYYY-MM-DD') is read as UTC midnight,
+    // which shows as the previous day in time zones behind UTC.
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -111,7 +114,7 @@ export default function ResultsCard({ result, cityName }: ResultsCardProps) {
 
       <div className="mt-6 pt-6 border-t border-gray-200 text-center">
         <p className="text-xs text-gray-500">
-          Data provided by Open-Meteo Weather API
+          Historical data: NASA POWER · Short-range forecast: Open-Meteo
         </p>
       </div>
     </div>

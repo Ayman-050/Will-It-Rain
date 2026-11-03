@@ -148,7 +148,7 @@ const Intro = ({ onComplete }: IntroProps) => {
         <div className="absolute inset-0 bg-white z-30 animate-pulse" style={{ animationDuration: '0.1s' }} />
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes grain {
           0%, 100% { transform: translate(0, 0); }
           10% { transform: translate(-1px, -1px); }

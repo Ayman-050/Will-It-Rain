@@ -7,63 +7,43 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import WeatherPrediction from "./components/WeatherPrediction";
 import Intro from "./components/Intro";
 import HeroSection from "./components/HeroSection";
-import { ForecastResult } from "./types";
+import { ForecastResult, RiskLevel } from "./types";
 import Map from "./components/Map";
-import axios from "axios";
+import { predict, type Prediction } from "./model/predict";
 import "./App.css"; 
 import Footer from "./components/Footer";
 import WhyUs from "./components/WhyUs";
 
-// Transform NASA POWER API data to ForecastResult format
-const transformNASADataToForecastResult = (nasaData: any, location: { lat: number; lon: number }, date: string): ForecastResult => {
-  const parameters = nasaData.properties?.parameter || {};
-  const temperatureData = parameters.T2M || {};
-  const precipitationData = parameters.PRECTOT || {};
-  
-  // Calculate averages
-  const temperatures = Object.values(temperatureData).filter((val: any) => val !== null) as number[];
-  const precipitations = Object.values(precipitationData).filter((val: any) => val !== null) as number[];
-  
-  const avgTemp = temperatures.length > 0 ? temperatures.reduce((a, b) => a + b, 0) / temperatures.length : 20;
-  const minTemp = temperatures.length > 0 ? Math.min(...temperatures) : avgTemp - 5;
-  const maxTemp = temperatures.length > 0 ? Math.max(...temperatures) : avgTemp + 5;
-  const avgPrecipitation = precipitations.length > 0 ? precipitations.reduce((a, b) => a + b, 0) / precipitations.length : 0;
-  
-  // Convert temperature from Celsius to Fahrenheit
-  const tempMaxF = (maxTemp * 9/5) + 32;
-  const tempMinF = (minTemp * 9/5) + 32;
-  
-  // Determine rain risk
-  const rainProbability = Math.min(90, avgPrecipitation * 100);
-  const rainLevel = rainProbability < 30 ? 'low' : rainProbability < 70 ? 'medium' : 'high';
-  const rainColor = rainLevel === 'low' ? 'green' : rainLevel === 'medium' ? 'yellow' : 'red';
-  const rainEmoji = rainLevel === 'low' ? '☀️' : rainLevel === 'medium' ? '⛅' : '🌧️';
-  
-  // Determine heat risk
-  const heatLevel = tempMaxF < 80 ? 'low' : tempMaxF < 95 ? 'medium' : 'high';
-  const heatColor = heatLevel === 'low' ? 'blue' : heatLevel === 'medium' ? 'orange' : 'red';
-  const heatEmoji = heatLevel === 'low' ? '❄️' : heatLevel === 'medium' ? '🌡️' : '🔥';
-  
+const toFahrenheit = (c: number) => Math.round((c * 9) / 5 + 32);
+
+// Turn the model's prediction into the simple risk summary shown on the results card
+const toForecastResult = (prediction: Prediction): ForecastResult => {
+  const rainPercent = Math.round(prediction.rainChance * 100);
+  const rainLevel: RiskLevel = rainPercent < 30 ? 'low' : rainPercent < 60 ? 'medium' : 'high';
+  const tempMaxF = toFahrenheit(prediction.tmax);
+  const heatLevel: RiskLevel = tempMaxF < 80 ? 'low' : tempMaxF < 95 ? 'medium' : 'high';
+  const color = { low: 'green', medium: 'yellow', high: 'red' };
+
   return {
     location: {
-      latitude: location.lat,
-      longitude: location.lon
+      latitude: prediction.lat,
+      longitude: prediction.lon
     },
-    date: date,
+    date: prediction.isoDate,
     rainRisk: {
-      probability: Math.round(rainProbability),
-      level: rainLevel as 'low' | 'medium' | 'high',
-      color: rainColor,
-      emoji: rainEmoji
+      probability: rainPercent,
+      level: rainLevel,
+      color: color[rainLevel],
+      emoji: rainLevel === 'low' ? '☀️' : rainLevel === 'medium' ? '⛅' : '🌧️'
     },
     heatRisk: {
-      temperatureMax: Math.round(tempMaxF),
-      temperatureMin: Math.round(tempMinF),
-      temperatureMaxC: Math.round(maxTemp),
-      temperatureMinC: Math.round(minTemp),
-      level: heatLevel as 'low' | 'medium' | 'high',
-      color: heatColor,
-      emoji: heatEmoji
+      temperatureMax: tempMaxF,
+      temperatureMin: toFahrenheit(prediction.tmin),
+      temperatureMaxC: Math.round(prediction.tmax),
+      temperatureMinC: Math.round(prediction.tmin),
+      level: heatLevel,
+      color: color[heatLevel],
+      emoji: heatLevel === 'low' ? '😊' : heatLevel === 'medium' ? '🌡️' : '🔥'
     }
   };
 };
@@ -79,7 +59,7 @@ function App() {
   const [manualLon, setManualLon] = useState("");
   const [date, setDate] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ForecastResult | null>(null);
+  const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [error, setError] = useState<string>(""); 
 
   const handleLocationSelect = (
@@ -90,7 +70,7 @@ function App() {
     setLocation({ lat, lon, name: cityName });
     setManualLat(lat.toString());
     setManualLon(lon.toString());
-    setResult(null);
+    setPrediction(null);
     setError("");
   };
 
@@ -99,44 +79,25 @@ function App() {
     setLocation({ lat, lon });
     setManualLat(lat.toString());
     setManualLon(lon.toString());
+    setPrediction(null);
+    setError("");
   };
 
   const handleDateSelect = (selectedDate: string) => {
     setDate(selectedDate);
-    setResult(null);
+    setPrediction(null);
     setError("");
   };
 
-  
   const handleGetForecast = async () => {
     if (!location || !date) return;
 
-    // Format the user-selected date for NASA API (YYYYMMDD format)
-    const formatDateForNASA = (dateString: string): string => {
-      const date = new Date(dateString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}${month}${day}`;
-    };
-
-    const formattedDate = formatDateForNASA(date);
-
     setIsLoading(true);
     setError("");
-    setResult(null);
-    
-    console.log(`https://power.larc.nasa.gov/api/temporal/hourly/point?start=${formattedDate}&end=${formattedDate}&latitude=${location.lat}&longitude=${location.lon}&community=ag&parameters=T2M,RH2M,PRECTOT,WS2M&header=true`)
+    setPrediction(null);
 
     try {
-      // Use the same parameters as WeatherPrediction for consistency
-      const forecast = await axios.get(`https://power.larc.nasa.gov/api/temporal/hourly/point?start=${formattedDate}&end=${formattedDate}&latitude=${location.lat}&longitude=${location.lon}&community=ag&parameters=T2M,RH2M,PRECTOT,WS2M&header=true`);
-      console.log(forecast)
-      
-      // Transform NASA API response to ForecastResult format
-      const transformedResult = transformNASADataToForecastResult(forecast.data, location, date);
-      setResult(transformedResult);
-    
+      setPrediction(await predict(location.lat, location.lon, date));
     } catch (err) {
       setError(
         err instanceof Error
@@ -154,20 +115,6 @@ function App() {
     setShowIntro(false);
   };
 
-
-
-
-
-//   async function getData() {
-//     const response = await axios.get(`https://power.larc.nasa.gov/api/temporal/hourly/point?start=20250720&end=20250730&latitude=73.0364&longitude=13.4109&community=ag&parameters=T2M&header=true
-// `)
-//     setTemperature(response.data)
-//     console.log(response.data.properties.parameter.T2M)
-//   }
-
-//   useEffect(()=>{
-//     getData()
-//   }, [])
 
   return (
     <>
@@ -214,22 +161,6 @@ function App() {
             onMapSelect={handleMapSelect}
           />
 
-          {/* Weather Prediction Section - Shows when location and date are selected */}
-          {location && date && (
-            <div className="w-full max-w-4xl">
-              <div className="text-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">AI Weather Prediction</h2>
-                <p className="text-gray-600">Powered by NASA POWER API and AI analysis</p>
-              </div>
-              <WeatherPrediction 
-                latitude={location.lat} 
-                longitude={location.lon} 
-                date={date}
-                dateRangeDays={14} // Analyze 7 days before and after the selected date
-              />
-            </div>
-          )}
-
           {location && date && (
             <button
               onClick={handleGetForecast}
@@ -252,11 +183,16 @@ function App() {
           </div>
         )}
 
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-8">
           {isLoading ? (
             <LoadingSpinner />
-          ) : result ? (
-            <ResultsCard result={result} cityName={location?.name} />
+          ) : prediction ? (
+            <>
+              <ResultsCard result={toForecastResult(prediction)} cityName={location?.name} />
+              <div className="w-full max-w-4xl">
+                <WeatherPrediction prediction={prediction} />
+              </div>
+            </>
           ) : null}
         </div>
 

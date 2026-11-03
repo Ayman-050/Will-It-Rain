@@ -1,18 +1,10 @@
-import React, { useCallback, useRef, useEffect, useState } from "react";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, useMap, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
-const containerStyle = {
-  width: "100%",
-  height: "75vh", // Adjust as needed or make responsive
-};
+// Free OpenStreetMap tiles via Leaflet — no API key or billing account needed.
 
-const defaultCenter = {
-  lat: 37.7749, // Default to San Francisco
-  lng: -122.4194,
-};
-
-// TODO: Replace with your actual Google Maps API key
-const GOOGLE_MAPS_API_KEY = "AIzaSyD4jgY3kfbY_xalzXJWu115yNvaQONlWjE";
+const defaultCenter: [number, number] = [37.7749, -122.4194]; // San Francisco
 
 interface MapProps {
   lat?: number;
@@ -20,65 +12,48 @@ interface MapProps {
   onMapSelect?: (lat: number, lng: number) => void;
 }
 
-export default function Map({ lat, lng, onMapSelect }: MapProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-  });
-
-  const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
-  const [zoom, setZoom] = useState(10);
-  const mapRef = useRef<google.maps.Map | null>(null);
-
-  // Update map when props change
+// Moves the map when the location changes (e.g. after a city search)
+function FlyTo({ lat, lng }: { lat?: number; lng?: number }) {
+  const map = useMap();
   useEffect(() => {
     if (typeof lat === "number" && typeof lng === "number") {
-      setSelected({ lat, lng });
-      setZoom(15);
-      if (mapRef.current) {
-        mapRef.current.panTo({ lat, lng });
-        mapRef.current.setZoom(15);
-      }
+      map.flyTo([lat, lng], Math.max(map.getZoom(), 10));
     }
-  }, [lat, lng]);
+  }, [lat, lng, map]);
+  return null;
+}
 
-  const handleMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
+function ClickHandler({ onMapSelect }: { onMapSelect?: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (event) => onMapSelect?.(event.latlng.lat, event.latlng.lng),
+  });
+  return null;
+}
 
-  const handleMapClick = (event: google.maps.MapMouseEvent) => {
-    if (event.latLng) {
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
-      setSelected({ lat, lng });
-      setZoom(15);
-      if (mapRef.current) {
-        mapRef.current.panTo({ lat, lng });
-        mapRef.current.setZoom(15);
-      }
-      if (onMapSelect) {
-        onMapSelect(lat, lng);
-      }
-    }
-  };
+export default function Map({ lat, lng, onMapSelect }: MapProps) {
+  const hasLocation = typeof lat === "number" && typeof lng === "number";
 
   return (
-    <div style={{ width: "100%" }}>
-      {isLoaded ? (
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={selected || defaultCenter}
-          zoom={zoom}
-          onClick={handleMapClick}
-          onLoad={handleMapLoad}
-        >
-          {selected && <Marker position={selected} />}
-        </GoogleMap>
-      ) : (
-        <div>Loading Map...</div>
-      )}
+    <div className="relative z-0 w-full max-w-4xl rounded-lg overflow-hidden shadow-md" style={{ height: "60vh" }}>
+      <MapContainer
+        center={hasLocation ? [lat, lng] : defaultCenter}
+        zoom={hasLocation ? 10 : 4}
+        style={{ width: "100%", height: "100%" }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {hasLocation && (
+          <CircleMarker
+            center={[lat, lng]}
+            radius={9}
+            pathOptions={{ color: "#ffffff", weight: 2, fillColor: "#2563eb", fillOpacity: 1 }}
+          />
+        )}
+        <FlyTo lat={lat} lng={lng} />
+        <ClickHandler onMapSelect={onMapSelect} />
+      </MapContainer>
     </div>
   );
 }
