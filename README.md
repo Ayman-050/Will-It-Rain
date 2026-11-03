@@ -2,7 +2,7 @@
 
 Planning an outdoor event? Pick a place and a date, and this app estimates the chance of rain, heat and other conditions using **30 years of NASA weather data**, a **trained statistical model**, and a **live forecast** when the date is close.
 
-**Live demo:** _coming soon_
+**Live demo:** https://will-it-rain-beta.vercel.app/
 
 ![App screenshot](docs/screenshot.png)
 
