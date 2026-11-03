@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { MapContainer, TileLayer, CircleMarker, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, AttributionControl, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Free OpenStreetMap tiles via Leaflet. No API key or billing account needed.
@@ -39,7 +39,10 @@ export default function Map({ lat, lng, onMapSelect }: MapProps) {
         center={hasLocation ? [lat, lng] : defaultCenter}
         zoom={hasLocation ? 10 : 4}
         style={{ width: "100%", height: "100%" }}
+        attributionControl={false}
       >
+        {/* Replaces Leaflet's default credit, which includes a flag icon */}
+        <AttributionControl prefix='<a href="https://leafletjs.com">Leaflet</a>' />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
